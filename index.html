@@ -95,12 +95,19 @@
     let esLider = false;
     let partidaActiva = false;
 
+    // Listeners globales para evitar múltiples listeners duplicados
+    let listenerJugadores = null;
+    let listenerRol = null;
+    let listenerVotos = null;
+
     function unirse() {
       nombreUsuario = document.getElementById("nombre").value.trim();
       if (!nombreUsuario) return alert("Ingresá tu nombre");
 
-      const ref = db.ref("jugadores");
-      ref.once("value", snap => {
+      const refJugadores = db.ref("jugadores");
+
+      // Añadir jugador y asignar líder si es el primero
+      refJugadores.once("value", snap => {
         const jugadores = snap.val() || {};
         if (Object.keys(jugadores).length === 0) esLider = true;
 
@@ -108,30 +115,62 @@
         document.getElementById("login").classList.add("hidden");
         document.getElementById("lobby").classList.remove("hidden");
         if (esLider) document.getElementById("liderControls").classList.remove("hidden");
+
+        // Configurar listeners
+        setupListeners();
       });
 
-      db.ref("jugadores").on("value", snap => {
+      // Quitar jugador al cerrar pestaña
+      db.ref("jugadores/" + nombreUsuario).onDisconnect().remove();
+    }
+
+    function setupListeners() {
+      if (listenerJugadores) listenerJugadores.off();
+      listenerJugadores = db.ref("jugadores");
+      listenerJugadores.on("value", snap => {
         const jugadores = snap.val() || {};
         document.getElementById("jugadores").innerHTML =
           Object.keys(jugadores).map(j => `<div>${j}</div>`).join("");
       });
 
-      // Eliminar jugador al cerrar pestaña
-      db.ref("jugadores/" + nombreUsuario).onDisconnect().remove();
-
-      // Escuchar rol asignado en partida
-      db.ref("jugadores/" + nombreUsuario + "/partida").on("value", snap => {
-        const jugador = snap.val();
-        if (!jugador) return;
+      if (listenerRol) listenerRol.off();
+      listenerRol = db.ref("jugadores/" + nombreUsuario + "/partida");
+      listenerRol.on("value", snap => {
+        const rol = snap.val();
+        if (!rol) {
+          // Volver al lobby si no tiene rol asignado
+          document.getElementById("juego").classList.add("hidden");
+          document.getElementById("lobby").classList.remove("hidden");
+          if (esLider) document.getElementById("liderControls").classList.remove("hidden");
+          partidaActiva = false;
+          eliminarBotones();
+          return;
+        }
+        // Mostrar pantalla de juego
         document.getElementById("lobby").classList.add("hidden");
         document.getElementById("juego").classList.remove("hidden");
-        if (jugador === "IMPOSTOR") {
+        if (rol === "IMPOSTOR") {
           document.getElementById("jugadorSeleccionado").innerText = "No sabés quién es el jugador. Sos el impostor 😈";
         } else {
-          document.getElementById("jugadorSeleccionado").innerText = `El jugador es: ${jugador}`;
+          document.getElementById("jugadorSeleccionado").innerText = `El jugador es: ${rol}`;
         }
+        partidaActiva = true;
         mostrarVotacion();
         if (esLider) mostrarBotonFinalizar();
+      });
+
+      if (listenerVotos) listenerVotos.off();
+      listenerVotos = db.ref("votos");
+      listenerVotos.on("value", snap => {
+        const votos = snap.val() || {};
+        const cuenta = {};
+        Object.values(votos).forEach(voto => {
+          cuenta[voto] = (cuenta[voto] || 0) + 1;
+        });
+        const resultado = Object.entries(cuenta).map(([jugador, cant]) =>
+          `${jugador}: ${cant} voto${cant > 1 ? "s" : ""}`
+        ).join("<br>");
+        document.getElementById("mensaje").innerHTML = resultado;
       });
     }
 
@@ -145,10 +184,9 @@
         const futbolista = futbolistas[Math.floor(Math.random() * futbolistas.length)];
         const impostor = jugadores[Math.floor(Math.random() * jugadores.length)];
 
-        // Limpiar votos anteriores y botones anteriores
+        // Limpiar votos y asignar roles
         db.ref("votos").remove();
-        eliminarBotonFinalizar();
-        eliminarBotonReiniciar();
+        eliminarBotones();
 
         jugadores.forEach(j => {
           db.ref("jugadores/" + j + "/partida").set(j === impostor ? "IMPOSTOR" : futbolista);
@@ -162,8 +200,24 @@
     }
 
     function reiniciarJuego() {
-      db.ref().set(null);
-      location.reload();
+      // Se elimina TODO menos jugadores, para conservar usuarios conectados
+      db.ref("votos").remove();
+      db.ref("partida").remove();
+      // Se eliminan roles de los jugadores para volver al lobby
+      db.ref("jugadores").once("value", snap => {
+        const jugadores = snap.val() || {};
+        Object.keys(jugadores).forEach(j => {
+          db.ref("jugadores/" + j + "/partida").remove();
+        });
+      });
+
+      partidaActiva = false;
+      eliminarBotones();
+
+      // Volver a lobby y permitir votar después del reinicio
+      document.getElementById("juego").classList.add("hidden");
+      document.getElementById("lobby").classList.remove("hidden");
+      if (esLider) document.getElementById("liderControls").classList.remove("hidden");
     }
 
     function mostrarVotacion() {
@@ -196,7 +250,7 @@
 
     function mostrarBotonFinalizar() {
       if (!esLider || !partidaActiva) return;
-      if (document.getElementById("finalizarBtn")) return; // Ya está
+      if (document.getElementById("finalizarBtn")) return; // Ya existe
 
       const botonFinalizar = document.createElement("button");
       botonFinalizar.id = "finalizarBtn";
@@ -206,19 +260,27 @@
       document.getElementById("juego").appendChild(botonFinalizar);
     }
 
-    function eliminarBotonFinalizar() {
-      const btn = document.getElementById("finalizarBtn");
-      if (btn) btn.remove();
+    function eliminarBotones() {
+      const btnFinalizar = document.getElementById("finalizarBtn");
+      if (btnFinalizar) btnFinalizar.remove();
+      const btnReiniciar = document.getElementById("reiniciarBtn");
+      if (btnReiniciar) btnReiniciar.remove();
     }
 
-    function eliminarBotonReiniciar() {
-      const btn = document.getElementById("reiniciarBtn");
-      if (btn) btn.remove();
+    function mostrarBotonReiniciar() {
+      if (document.getElementById("reiniciarBtn")) return;
+
+      const botonReiniciar = document.createElement("button");
+      botonReiniciar.id = "reiniciarBtn";
+      botonReiniciar.innerText = "Reiniciar partida";
+      botonReiniciar.style.marginTop = "15px";
+      botonReiniciar.onclick = reiniciarJuego;
+      document.getElementById("juego").appendChild(botonReiniciar);
     }
 
     function finalizarPartida() {
       partidaActiva = false;
-      eliminarBotonFinalizar();
+      eliminarBotones();
 
       db.ref("votos").once("value", snap => {
         const votos = snap.val() || {};
@@ -227,7 +289,6 @@
           cuenta[voto] = (cuenta[voto] || 0) + 1;
         });
 
-        // Encontrar jugador con más votos
         let maxVotos = 0;
         let expulsado = null;
         for (const jugador in cuenta) {
@@ -259,30 +320,6 @@
         });
       });
     }
-
-    function mostrarBotonReiniciar() {
-      if (document.getElementById("reiniciarBtn")) return;
-
-      const botonReiniciar = document.createElement("button");
-      botonReiniciar.id = "reiniciarBtn";
-      botonReiniciar.innerText = "Reiniciar partida";
-      botonReiniciar.style.marginTop = "15px";
-      botonReiniciar.onclick = reiniciarJuego;
-      document.getElementById("juego").appendChild(botonReiniciar);
-    }
-
-    // Mostrar votos en tiempo real
-    db.ref("votos").on("value", snap => {
-      const votos = snap.val() || {};
-      const cuenta = {};
-      Object.values(votos).forEach(voto => {
-        cuenta[voto] = (cuenta[voto] || 0) + 1;
-      });
-      const resultado = Object.entries(cuenta).map(([jugador, cant]) =>
-        `${jugador}: ${cant} voto${cant > 1 ? "s" : ""}`
-      ).join("<br>");
-      document.getElementById("mensaje").innerHTML = resultado;
-    });
   </script>
 </body>
 </html>
