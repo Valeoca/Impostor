@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>El Impostor - Fútbol</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
@@ -60,56 +60,56 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // Lista con jugadores mundialmente reconocidos
     const futbolistas = [
-      "Lionel Messi", "Cristiano Ronaldo", "Kylian Mbappé", "Erling Haaland", "Neymar Jr.",
-      "Luka Modric", "Toni Kroos", "Karim Benzema", "Robert Lewandowski", "Harry Kane",
-      "Mohamed Salah", "Sadio Mané", "Kevin De Bruyne", "Phil Foden", "Ilkay Gündogan",
-      "Virgil van Dijk", "Alisson Becker", "Ederson Moraes", "Thibaut Courtois", "Jan Oblak",
-      "Sergio Ramos", "Gerard Piqué", "Jude Bellingham", "Vinicius Jr.", "Rodrygo Goes",
-      "Antoine Griezmann", "Ousmane Dembélé", "Frenkie de Jong", "Pedri", "Gavi",
-      "Achraf Hakimi", "Sofyan Amrabat", "Yassine Bounou", "João Félix", "Diogo Jota",
-      "Bruno Fernandes", "Rúben Dias", "Bernardo Silva", "Rafael Leão", "Christian Eriksen",
-      "Romelu Lukaku", "Lautaro Martínez", "Paulo Dybala", "Ángel Di María", "Rodrigo De Paul",
-      "Nicolás Otamendi", "Emiliano Martínez", "Enzo Fernández", "Alexis Mac Allister", "Julián Álvarez",
-      "Giovani Lo Celso", "Leandro Paredes", "Nahuel Molina", "Lisandro Martínez", "Cristian Romero",
-      "Federico Valverde", "Darwin Núñez", "Luis Suárez", "Edinson Cavani", "Diego Godín",
-      "James Rodríguez", "Juan Cuadrado", "Duván Zapata", "Luis Díaz", "Wilmar Barrios",
-      "Alphonso Davies", "Jonathan David", "Christian Pulisic", "Weston McKennie", "Tyler Adams",
-      "Gio Reyna", "Sergiño Dest", "André Onana", "Victor Osimhen", "Wilfred Ndidi",
-      "Thomas Partey", "Mohammed Kudus", "André Ayew", "Takumi Minamino", "Kaoru Mitoma",
-      "Son Heung-min", "Hwang Hee-chan", "Mehdi Taremi", "Sardar Azmoun", "Hirving Lozano",
-      "Raúl Jiménez", "Andrés Guardado", "Guillermo Ochoa", "Keylor Navas", "Bryan Ruiz",
-      "Joel Campbell", "Clint Dempsey", "Tim Howard", "Diego Forlán", "Carlos Valderrama",
-      "Ronaldinho", "Pelé", "Diego Maradona", "Zinedine Zidane", "Francesco Totti",
-      "Alessandro Del Piero", "Andrea Pirlo", "Gianluigi Buffon", "Paolo Maldini", "Fabio Cannavaro",
-      "Cafu", "Roberto Carlos", "Rivaldo", "Ronaldo Nazário", "Zico",
-      "George Weah", "Samuel Eto'o", "Didier Drogba", "Emmanuel Adebayor", "Yaya Touré",
-      "Jay-Jay Okocha", "Roger Milla", "Patrick Vieira", "Thierry Henry", "David Beckham",
-      "Wayne Rooney", "Frank Lampard", "Steven Gerrard", "Paul Scholes", "Rio Ferdinand",
-      "John Terry", "Ashley Cole", "Petr Čech", "Nemanja Vidić", "Dimitar Berbatov",
-      "Robin van Persie", "Arjen Robben", "Wesley Sneijder", "Clarence Seedorf", "Edgar Davids",
-      "Ruud van Nistelrooy", "Marco van Basten", "Dennis Bergkamp", "Xavi", "Iniesta",
-      "David Villa", "Fernando Torres", "Iker Casillas", "Sergio Busquets", "Gerard Moreno",
-      "Álvaro Morata", "Koke", "Marco Asensio", "Jesús Navas", "Pau Torres",
-      "Ciro Immobile", "Lorenzo Insigne", "Federico Chiesa", "Leonardo Bonucci", "Giorgio Chiellini",
-      "Gianluigi Donnarumma", "Manuel Neuer", "Joshua Kimmich", "Leon Goretzka", "Kai Havertz",
-      "Timo Werner", "Thomas Müller", "Mats Hummels", "Antonio Rüdiger", "Marc-André ter Stegen",
-      "Mesut Özil", "Mario Götze", "Miroslav Klose", "Bastian Schweinsteiger", "Philipp Lahm",
-      "Andriy Shevchenko", "Henrikh Mkhitaryan", "Luka Jović", "Ivan Perišić", "Mario Mandžukić",
-      "Dejan Lovren", "Domagoj Vida", "Danijel Subašić", "Nikola Vlašić", "Josko Gvardiol"
+      "Lionel Messi", "Cristiano Ronaldo", "Neymar Jr.", "Kylian Mbappé", "Erling Haaland",
+      "Robert Lewandowski", "Kevin De Bruyne", "Mohamed Salah", "Luka Modric", "Karim Benzema",
+      "Sergio Ramos", "Manuel Neuer", "Harry Kane", "Virgil van Dijk", "Luis Suárez",
+      "Zlatan Ibrahimović", "Paul Pogba", "Raheem Sterling", "Sadio Mané", "Antoine Griezmann",
+      "Luis Figo", "Ronaldinho", "Rivaldo", "Thierry Henry", "Andrés Iniesta",
+      "Xavi Hernández", "Frank Lampard", "Steven Gerrard", "David Beckham", "Zinedine Zidane",
+      "Paolo Maldini", "Roberto Carlos", "Cafu", "Johan Cruyff", "Diego Maradona",
+      "Pelé", "George Best", "Bobby Charlton", "Gerd Müller", "Ferenc Puskás",
+      "Eusébio", "Michel Platini", "Marco van Basten", "Jürgen Klinsmann", "Franz Beckenbauer",
+      "Drogba", "Kaka", "Luis Enrique", "Carlos Tevez", "Raúl González",
+      "David Villa", "Fernando Torres", "Iker Casillas", "Marcelo", "Thiago Silva",
+      "Ángel Di María", "Gareth Bale", "Paul Scholes", "Andriy Shevchenko", "Nemanja Vidić",
+      "Diego Forlán", "Robin van Persie", "Arjen Robben", "James Rodríguez", "Juan Mata",
+      "Mesut Özil", "Karim Benzema", "Éric Cantona", "Claude Makélélé", "Philipp Lahm",
+      "Bastian Schweinsteiger", "Thomas Müller", "Mats Hummels", "Mario Götze", "Toni Kroos",
+      "Marc-André ter Stegen", "Alisson Becker", "Jan Oblak", "Ederson Moraes", "Thibaut Courtois",
+      "Kalidou Koulibaly", "Trent Alexander-Arnold", "Jordan Henderson", "N'Golo Kanté", "Raheem Sterling",
+      "Leroy Sané", "Jadon Sancho", "Phil Foden", "Mason Mount", "Bukayo Saka",
+      "Jude Bellingham", "Erling Haaland", "Vinícius Jr.", "Rodrygo", "Pedri",
+      "Frenkie de Jong", "Gavi", "João Félix", "Bernardo Silva", "Rúben Dias",
+      "Raphaël Varane", "Paul Pogba", "Edinson Cavani", "Álvaro Morata", "Kylian Mbappé",
+      "Marcelo", "Coutinho", "Sergio Agüero", "Diego Godín", "Roberto Firmino",
+      "Luis Alberto", "João Cancelo", "Alexis Sánchez", "Timo Werner", "Thomas Lemar",
+      "Timo Werner", "Hugo Lloris", "David Alaba", "Gareth Bale", "Christian Eriksen",
+      "Ivan Rakitić", "Neymar", "Manuel Neuer", "David Silva", "Dani Alves",
+      "Gianluigi Buffon", "Wesley Sneijder", "Claudio Marchisio", "Marco Reus", "Ivan Perišić",
+      "Gonzalo Higuaín", "James Milner", "Ashley Cole", "Cesc Fàbregas", "Eden Hazard",
+      "Luka Modrić", "Mario Mandžukić", "Dani Carvajal", "Ángel Correa", "Lucas Moura",
+      "Lucas Digne", "Miralem Pjanić", "Matthijs de Ligt", "Kalvin Phillips", "Rodri",
+      "Bruno Fernandes", "Christian Pulisic", "Gianluigi Donnarumma", "Eduardo Camavinga",
+      "Federico Valverde", "Achraf Hakimi", "Philippe Coutinho", "Mousa Dembélé", "Yaya Touré",
+      "Karim Benzema", "Thiago Alcântara", "Marquinhos", "Sergio Busquets", "Marc-André ter Stegen",
+      "Gerard Piqué", "Lucas Hernández", "Jordi Alba", "Raphaël Varane", "César Azpilicueta",
+      "Jordi Alba", "Sergio Busquets", "Juan Cuadrado", "Javier Mascherano", "Thiago Silva"
     ];
 
     let nombreUsuario = "";
     let esLider = false;
 
     function unirse() {
-      nombreUsuario = document.getElementById("nombre").value;
+      nombreUsuario = document.getElementById("nombre").value.trim();
       if (!nombreUsuario) return alert("Ingresá tu nombre");
 
       const ref = db.ref("jugadores");
       ref.once("value", snap => {
         const jugadores = snap.val() || {};
         if (Object.keys(jugadores).length === 0) esLider = true;
+
         db.ref("jugadores/" + nombreUsuario).set({ nombre: nombreUsuario });
         document.getElementById("login").classList.add("hidden");
         document.getElementById("lobby").classList.remove("hidden");
@@ -122,8 +122,10 @@
           Object.keys(jugadores).map(j => `<div>${j}</div>`).join("");
       });
 
+      // Eliminar jugador cuando cierra pestaña
       db.ref("jugadores/" + nombreUsuario).onDisconnect().remove();
 
+      // Escuchar partida asignada
       db.ref("jugadores/" + nombreUsuario + "/partida").on("value", snap => {
         const jugador = snap.val();
         if (!jugador) return;
@@ -143,9 +145,14 @@
         const jugadores = Object.keys(snap.val() || {});
         const futbolista = futbolistas[Math.floor(Math.random() * futbolistas.length)];
         const impostor = jugadores[Math.floor(Math.random() * jugadores.length)];
+
+        // Limpiar votos anteriores
+        db.ref("votos").remove();
+
         jugadores.forEach(j => {
           db.ref("jugadores/" + j + "/partida").set(j === impostor ? "IMPOSTOR" : futbolista);
         });
+
         db.ref("partida/jugador").set(futbolista);
       });
     }
@@ -158,18 +165,42 @@
     function mostrarVotacion() {
       db.ref("jugadores").once("value", snap => {
         const jugadores = Object.keys(snap.val() || {});
-        document.getElementById("votacion").innerHTML = jugadores.map(j =>
-          `<button onclick="votar('${j}')">Votar a ${j}</button>`).join("<br>");
+        db.ref("votos/" + nombreUsuario).once("value", votoSnap => {
+          if (votoSnap.exists()) {
+            // Ya votó, mostrar mensaje
+            document.getElementById("votacion").innerHTML = `<p>Ya votaste. Gracias.</p>`;
+          } else {
+            // Puede votar
+            document.getElementById("votacion").innerHTML = jugadores.map(j =>
+              `<button onclick="votar('${j}')" style="margin:3px;">Votar a ${j}</button>`
+            ).join("<br>");
+          }
+        });
       });
     }
 
     function votar(nombre) {
-      db.ref("votos/" + nombre).transaction(v => (v || 0) + 1);
+      // Solo votar si no votó antes
+      db.ref("votos/" + nombreUsuario).once("value", votoSnap => {
+        if (votoSnap.exists()) {
+          alert("Ya votaste");
+          mostrarVotacion();
+          return;
+        }
+        db.ref("votos/" + nombreUsuario).set(nombre);
+      });
     }
 
     db.ref("votos").on("value", snap => {
       const votos = snap.val() || {};
-      const resultado = Object.entries(votos).map(([jugador, cant]) => `${jugador}: ${cant} votos`).join("<br>");
+      // Contar votos por jugador
+      const cuenta = {};
+      Object.values(votos).forEach(voto => {
+        cuenta[voto] = (cuenta[voto] || 0) + 1;
+      });
+      const resultado = Object.entries(cuenta).map(([jugador, cant]) =>
+        `${jugador}: ${cant} voto${cant > 1 ? "s" : ""}`
+      ).join("<br>");
       document.getElementById("mensaje").innerHTML = resultado;
     });
   </script>
