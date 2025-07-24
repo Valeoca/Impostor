@@ -1,32 +1,33 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>¿Quién es el Impostor?</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <title>El Impostor - Juego Online</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <style>
-    body { font-family: Arial; text-align: center; background-color: #121212; color: #f1f1f1; }
+    body { font-family: Arial, sans-serif; background: #111; color: #fff; text-align: center; padding: 20px; }
+    button { margin: 10px; padding: 10px 20px; font-size: 16px; }
     .hidden { display: none; }
-    button { margin: 5px; padding: 10px; background-color: #333; color: white; border: none; border-radius: 5px; cursor: pointer; }
-    button:hover { background-color: #555; }
   </style>
 </head>
 <body>
-  <h1>¿Quién es el Impostor?</h1>
+  <h1>El Impostor</h1>
   <div id="lobby">
-    <input id="nombre" placeholder="Tu nombre" />
-    <button onclick="entrarLobby()">Entrar</button>
-  </div>
-  <div id="juego" class="hidden">
-    <h2 id="jugadorAsignado"></h2>
-    <div id="mensaje"></div>
-    <div id="votacion"></div>
+    <input type="text" id="nombre" placeholder="Tu nombre">
+    <button onclick="unirse()">Unirse a la partida</button>
+    <div id="jugadores"></div>
     <div id="liderControls" class="hidden">
-      <button onclick="iniciarJuego()">Iniciar Partida</button>
-      <button onclick="finalizarPartida()">Finalizar Partida</button>
-      <button onclick="reiniciarJuego()">Reiniciar Partida</button>
+      <button onclick="iniciarJuego()">Iniciar juego</button>
+      <button onclick="reiniciarJuego()">Reiniciar partida</button>
     </div>
   </div>
+
+  <div id="juego" class="hidden">
+    <p id="mensaje"></p>
+    <div id="votacion"></div>
+    <button id="btnReiniciar" class="hidden" onclick="reiniciarJuego()">Reiniciar partida</button>
+  </div>
+
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyC75hIhVE6SYEuyGiR44Q2VqEzyGQeu-mI",
@@ -35,132 +36,108 @@
       projectId: "impostorr-e087b",
       storageBucket: "impostorr-e087b.appspot.com",
       messagingSenderId: "94911572425",
-      appId: "1:94911572425:web:b23187ef0213eb443c6018",
-      measurementId: "G-VKYKF342DN"
+      appId: "1:94911572425:web:b23187ef0213eb443c6018"
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    const jugadoresFamosos = ["Messi", "Cristiano Ronaldo", "Mbappé", "Neymar", "Haaland", "Modric", "Vinicius", "Griezmann", "De Bruyne", "Bellingham", "Lewandowski", "Benzema", "Dybala", "Di María", "Courtois", "Salah", "Kane", "Foden", "Sané", "Musiala", "Alisson", "Kimmich", "Pedri", "Gavi", "João Félix", "Rashford", "Sterling", "Rodri", "Araujo", "Martínez", "Valverde", "Chiesa", "Vlahovic", "Onana", "Mendy", "Akanji", "Grealish", "Lautaro", "Otamendi", "Enzo Fernández", "Julián Álvarez", "Walker", "Maguire", "Varane", "Pogba", "Hakimi", "Ziyech", "Koulibaly", "Saka", "Odegaard", "Son", "Tadic", "Bonucci", "Jorginho", "Locatelli", "Reus", "Kroos", "Hummels", "Ter Stegen", "Busquets", "Piqué", "Alba", "Rüdiger", "Mount", "Chilwell", "Fofana", "Zinchenko", "Martial", "Trent Alexander-Arnold", "Robertson", "Gakpo", "Luiz Díaz", "Núñez", "Casemiro", "Richarlison", "Antony", "Danilo", "Gundogan", "Laporte", "Torres", "Morata", "Ansu Fati", "Pulisic", "Dest", "McKennie", "Reyna", "Davies", "Jonathan David", "Cuadrado", "James Rodríguez", "Suárez", "Cavani", "Filipe Luís", "David Luiz", "Thiago Silva", "Gabriel Jesus", "Fred", "Raphinha", "Militao", "Tchouaméni", "Camavinga", "Navas", "Bravo", "Isco", "Asensio", "Illarramendi", "Alaba", "Weghorst", "Depay", "Blind", "Klaassen", "Malacia", "Schuurs", "De Ligt", "Van Dijk", "Berghuis", "Zlatan Ibrahimović", "Eriksen", "Delaney", "Schmeichel", "Cornelius", "Højlund", "Oblak", "Savic", "Kostic", "Mitrovic", "Szczesny", "Zielinski", "Lewy", "Piatek", "Modeste", "Giroud", "Coman", "Rabiot", "Tolisso", "Ben Yedder", "Kolo Muani", "Upamecano", "Konaté", "Nkunku", "Thuram", "Dembele", "Umtiti", "Areola", "Mandanda", "Trapp", "Baumgartner", "Sabitzer", "Arnautović", "Dragovic", "Kalajdzic", "Sorloth", "Haaland", "Ødegaard", "Berge", "King", "Brahimi", "Marega", "Slimani", "Mahrez", "Feghouli"];
+    const jugadoresFamosos = [
+      "Messi", "Cristiano Ronaldo", "Neymar", "Mbappé", "Haaland", "Modric", "Bellingham", "Vinicius Jr.",
+      "Dibu Martínez", "Griezmann", "Di María", "De Bruyne", "Lewandowski", "Kane", "Benzema", "Salah",
+      "Foden", "Pedri", "Gavi", "Enzo Fernández", "Álvarez", "João Félix", "Rashford", "Lautaro Martínez",
+      "Son", "Casemiro", "Valverde", "Alisson", "Courtois", "Ter Stegen", "Araujo", "Walker", "Zinchenko",
+      "Tchouaméni", "Sané", "Müller", "Musiala", "Giroud", "Ziyech", "Hakimi", "Osimhen", "Isak", "Bonucci",
+      "Kvaratskhelia", "Kulusevski", "Onana", "Mount", "Kimmich", "Reus", "Donnarumma"
+      // Podés agregar más hasta 200 si querés
+    ];
 
-    let nombre = "";
+    let jugadorId = null;
     let esLider = false;
     let partidaActiva = false;
 
-    function entrarLobby() {
-      nombre = document.getElementById("nombre").value.trim();
+    window.addEventListener("beforeunload", () => {
+      if (jugadorId) db.ref("jugadores/" + jugadorId).remove();
+    });
+
+    function unirse() {
+      const nombre = document.getElementById("nombre").value.trim();
       if (!nombre) return alert("Poné tu nombre");
 
-      db.ref("jugadores/" + nombre).set({ conectado: true });
+      jugadorId = db.ref("jugadores").push({ nombre }).key;
+      db.ref("jugadores/" + jugadorId).set({ nombre });
 
       db.ref("jugadores").once("value", snap => {
-        if (!snap.exists()) esLider = true;
-        document.getElementById("lobby").classList.add("hidden");
-        document.getElementById("juego").classList.remove("hidden");
-        if (esLider) document.getElementById("liderControls").classList.remove("hidden");
-      });
-
-      window.addEventListener("beforeunload", () => {
-        db.ref("jugadores/" + nombre).remove();
-      });
-
-      db.ref("partida/resultado").on("value", snap => {
-        const res = snap.val();
-        if (res) {
-          document.getElementById("mensaje").innerText = res;
-          mostrarBotonReiniciar();
-          partidaActiva = false;
+        if (Object.keys(snap.val()).length === 1) {
+          esLider = true;
+          document.getElementById("liderControls").classList.remove("hidden");
         }
       });
 
+      db.ref("jugadores").on("value", snap => {
+        const datos = snap.val() || {};
+        const lista = Object.values(datos).map(j => j.nombre).join("<br>");
+        document.getElementById("jugadores").innerHTML = "<h3>Jugadores:</h3>" + lista;
+      });
+
       db.ref("partida/estado").on("value", snap => {
-        if (snap.val() === "finalizada") {
-          document.getElementById("votacion").innerHTML = "";
-          db.ref("partida/resultado").once("value", r => {
-            document.getElementById("mensaje").innerText = r.val();
-            mostrarBotonReiniciar();
-          });
+        const estado = snap.val();
+        if (estado === "finalizada") {
+          ocultarVotacion();
+          mostrarResultado();
         }
       });
     }
 
     function iniciarJuego() {
       db.ref("jugadores").once("value", snap => {
-        const lista = Object.keys(snap.val() || {});
-        if (lista.length < 3) return alert("Mínimo 3 jugadores");
+        const jugadores = snap.val();
+        if (!jugadores || Object.keys(jugadores).length < 3) return alert("Se necesitan al menos 3 jugadores");
 
+        const ids = Object.keys(jugadores);
+        const impostor = ids[Math.floor(Math.random() * ids.length)];
         const jugadorElegido = jugadoresFamosos[Math.floor(Math.random() * jugadoresFamosos.length)];
-        const impostor = lista[Math.floor(Math.random() * lista.length)];
 
-        lista.forEach(j => {
-          const rol = j === impostor ? "IMPOSTOR" : "TRIPULANTE";
-          db.ref("jugadores/" + j + "/partida").set(rol);
+        db.ref("partida").set({ jugador: jugadorElegido, impostor: impostor, estado: "activa" });
+
+        ids.forEach(id => {
+          db.ref("jugadores/" + id + "/partida").set(true);
         });
 
-        db.ref("partida/jugador").set(jugadorElegido);
         partidaActiva = true;
-        mostrarVotacion();
-
-        db.ref("jugadores/" + nombre + "/partida").once("value", snap => {
-          const miRol = snap.val();
-          document.getElementById("jugadorAsignado").innerText =
-            miRol === "IMPOSTOR" ? "Sos el IMPOSTOR. Descubrí quién es el jugador." :
-            `Jugador: ${jugadorElegido}`;
-        });
+        mostrarJuego(jugadorElegido, impostor);
       });
     }
 
-    function mostrarVotacion() {
+    function mostrarJuego(jugador, impostorId) {
+      const esImpostor = jugadorId === impostorId;
+      document.getElementById("mensaje").innerText = esImpostor ?
+        "Sos el impostor. No sabés quién es el jugador." :
+        "Jugador de fútbol elegido: " + jugador;
+
+      document.getElementById("juego").classList.remove("hidden");
+      document.getElementById("lobby").classList.add("hidden");
+
       db.ref("jugadores").once("value", snap => {
-        const lista = Object.keys(snap.val() || {});
-        const container = document.getElementById("votacion");
-        container.innerHTML = "<h3>¿Quién es el impostor?</h3>";
-        lista.forEach(j => {
-          if (j !== nombre) {
-            const btn = document.createElement("button");
-            btn.innerText = j;
-            btn.onclick = () => votar(j);
-            container.appendChild(btn);
+        const jugadores = snap.val();
+        const yaVotaste = false;
+        const contenedor = document.getElementById("votacion");
+        contenedor.innerHTML = "<h3>Votá al impostor:</h3>";
+        Object.keys(jugadores).forEach(id => {
+          if (id !== jugadorId) {
+            const b = document.createElement("button");
+            b.innerText = jugadores[id].nombre;
+            b.onclick = () => votar(id);
+            contenedor.appendChild(b);
           }
         });
       });
     }
 
-    function votar(aQuien) {
-      db.ref("votos/" + nombre).once("value", snap => {
+    function votar(idVotado) {
+      db.ref("votos/" + jugadorId).once("value", snap => {
         if (snap.exists()) return alert("Ya votaste");
-        db.ref("votos/" + nombre).set(aQuien);
-        document.getElementById("mensaje").innerText = `Votaste a ${aQuien}`;
+        db.ref("votos/" + jugadorId).set(idVotado);
       });
-    }
-
-    function finalizarPartida() {
-      partidaActiva = false;
-      db.ref("votos").once("value", snap => {
-        const votos = snap.val() || {};
-        const cuenta = {};
-        Object.values(votos).forEach(v => cuenta[v] = (cuenta[v] || 0) + 1);
-        let max = 0, expulsado = null;
-        for (const j in cuenta) {
-          if (cuenta[j] > max) {
-            max = cuenta[j];
-            expulsado = j;
-          }
-        }
-        if (!expulsado) return db.ref("partida/resultado").set("No hubo votos.");
-
-        db.ref("jugadores/" + expulsado + "/partida").once("value", rol => {
-          const resultado = rol.val() === "IMPOSTOR"
-            ? `¡El impostor (${expulsado}) fue expulsado! ¡Ganan los tripulantes!`
-            : `Expulsaron a ${expulsado}, que no era impostor. ¡Gana el impostor!`;
-          db.ref("partida/resultado").set(resultado);
-          db.ref("partida/estado").set("finalizada");
-        });
-      });
-    }
-
-    function mostrarBotonReiniciar() {
-      if (esLider) document.getElementById("liderControls").classList.remove("hidden");
     }
 
     function reiniciarJuego() {
@@ -172,12 +149,49 @@
           db.ref("jugadores/" + j + "/partida").remove();
         });
       });
+
       partidaActiva = false;
       document.getElementById("mensaje").innerText = "";
       document.getElementById("votacion").innerHTML = "";
       document.getElementById("juego").classList.add("hidden");
       document.getElementById("lobby").classList.remove("hidden");
+      document.getElementById("btnReiniciar").classList.add("hidden");
       if (esLider) document.getElementById("liderControls").classList.remove("hidden");
+    }
+
+    function ocultarVotacion() {
+      document.getElementById("votacion").innerHTML = "";
+    }
+
+    function mostrarResultado() {
+      db.ref("partida").once("value", snap => {
+        const partida = snap.val();
+        if (!partida) return;
+
+        db.ref("votos").once("value", votosSnap => {
+          const votos = votosSnap.val() || {};
+          const conteo = {};
+          Object.values(votos).forEach(id => {
+            conteo[id] = (conteo[id] || 0) + 1;
+          });
+
+          let masVotado = null;
+          let maxVotos = 0;
+          Object.keys(conteo).forEach(id => {
+            if (conteo[id] > maxVotos) {
+              maxVotos = conteo[id];
+              masVotado = id;
+            }
+          });
+
+          db.ref("jugadores/" + masVotado).once("value", snap => {
+            const nombre = snap.val()?.nombre || "Nadie";
+            const ganador = masVotado === partida.impostor ? "¡Ganaron los tripulantes!" : "¡Ganó el impostor!";
+            document.getElementById("mensaje").innerText = `El más votado fue ${nombre}. ${ganador}`;
+            document.getElementById("btnReiniciar").classList.remove("hidden");
+          });
+        });
+      });
     }
   </script>
 </body>
