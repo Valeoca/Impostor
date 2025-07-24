@@ -1,15 +1,50 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>El Impostor - Juego Online</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>El Impostor - Fútbol</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #111;
+      color: #eee;
+      padding: 20px;
+      text-align: center;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px;
+      font-size: 16px;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
 </head>
 <body>
-  <h1>Juego: El Impostor</h1>
-  <div id="lobby"></div>
-  <div id="controls"></div>
-  <div id="game"></div>
+  <h1>🎯 El Impostor - Fútbol</h1>
+  <div id="login">
+    <input id="nombre" placeholder="Tu nombre" />
+    <button onclick="unirse()">Unirse</button>
+  </div>
+
+  <div id="lobby" class="hidden">
+    <h2>Lobby</h2>
+    <div id="jugadores"></div>
+    <div id="liderControls" class="hidden">
+      <button onclick="iniciarJuego()">Iniciar partida</button>
+      <button onclick="reiniciarJuego()">Reiniciar</button>
+    </div>
+  </div>
+
+  <div id="juego" class="hidden">
+    <h2 id="jugadorSeleccionado"></h2>
+    <p id="mensaje"></p>
+    <div id="votacion"></div>
+  </div>
 
   <script>
     const firebaseConfig = {
@@ -17,126 +52,126 @@
       authDomain: "impostorr-e087b.firebaseapp.com",
       databaseURL: "https://impostorr-e087b-default-rtdb.firebaseio.com",
       projectId: "impostorr-e087b",
-      storageBucket: "impostorr-e087b.firebasestorage.app",
+      storageBucket: "impostorr-e087b.appspot.com",
       messagingSenderId: "94911572425",
       appId: "1:94911572425:web:b23187ef0213eb443c6018",
       measurementId: "G-VKYKF342DN"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     const futbolistas = [
-      "Lionel Messi", "Cristiano Ronaldo", "Neymar Jr.", "Kylian Mbappé", "Erling Haaland",
-      "Karim Benzema", "Luka Modric", "Toni Kroos", "Paulo Dybala", "Ángel Di María",
-      "Robert Lewandowski", "Harry Kane", "Kevin De Bruyne", "Virgil van Dijk", "Sergio Ramos",
-      "Gianluigi Donnarumma", "Jan Oblak", "Thibaut Courtois", "Alisson Becker", "Ederson Moraes",
-      "Jude Bellingham", "Phil Foden", "Bukayo Saka", "Vinícius Jr.", "Rodrygo Goes",
-      "Federico Valverde", "Eduardo Camavinga", "João Félix", "João Cancelo", "Bernardo Silva",
-      "Bruno Fernandes", "Marcus Rashford", "Jadon Sancho", "Raheem Sterling", "Declan Rice",
-      "Trent Alexander-Arnold", "Andrew Robertson", "Joshua Kimmich", "Leon Goretzka", "Manuel Neuer",
-      "Thomas Müller", "Serge Gnabry", "Kingsley Coman", "Alphonso Davies", "Dayot Upamecano",
-      "Achraf Hakimi", "Hakim Ziyech", "Sofyan Amrabat", "Kalidou Koulibaly", "Sadio Mané",
-      "Edouard Mendy", "Riyad Mahrez", "Wilfried Zaha", "Victor Osimhen", "Mohamed Salah",
-      "Pierre-Emerick Aubameyang", "Christian Pulisic", "Weston McKennie", "Gio Reyna", "Tyler Adams",
-      "Alphonso Davies", "Jonathan David", "Raúl Jiménez", "Hirving Lozano", "Edson Álvarez",
-      "André Carrillo", "Paolo Guerrero", "Jefferson Farfán", "Claudio Bravo", "Arturo Vidal",
-      "Alexis Sánchez", "Eduardo Vargas", "Diego Godín", "Luis Suárez", "Edinson Cavani",
-      "Darwin Núñez", "Ronald Araújo", "Miguel Almirón", "Enzo Fernández", "Julián Álvarez",
-      "Rodrigo De Paul", "Nicolás Otamendi", "Lisandro Martínez", "Lautaro Martínez", "Leandro Paredes",
-      "Gio Lo Celso", "Nahuel Molina", "Cristian Romero", "Emiliano Martínez", "Franco Armani",
-      "Gerard Piqué", "Jordi Alba", "Pedri", "Gavi", "Ansu Fati",
-      "Ferran Torres", "Raphinha", "Ousmane Dembélé", "Antoine Griezmann", "Memphis Depay",
-      "Frenkie de Jong", "Ronald Koeman", "Xavi Hernández", "Andrés Iniesta", "Iker Casillas",
-      "David de Gea", "Pau Torres", "Álvaro Morata", "Marco Asensio", "Isco",
-      "César Azpilicueta", "Dani Carvajal", "Marc-André ter Stegen", "Nico Williams", "Yeremy Pino",
-      "Takefusa Kubo", "Takumi Minamino", "Son Heung-min", "Hwang Hee-chan", "Wu Lei",
-      "Maya Yoshida", "Yuto Nagatomo", "Ali Al-Habsi", "Salem Al-Dawsari", "Ali Al-Bulayhi",
-      "Taremi Mehdi", "Sardar Azmoun", "Ali Gholizadeh", "Mathew Ryan", "Aaron Mooy",
-      "Chris Wood", "Winston Reid", "Andrej Kramarić", "Luka Jović", "Ivan Perišić",
-      "Marcelo Brozović", "Domagoj Vida", "Dejan Lovren", "Mario Pašalić", "Joško Gvardiol",
-      "Dominik Livaković", "Yann Sommer", "Granit Xhaka", "Xherdan Shaqiri", "Breel Embolo",
-      "Christian Eriksen", "Kasper Schmeichel", "Simon Kjær", "Andreas Christensen", "Joachim Andersen",
-      "Martin Ødegaard", "Erling Haaland", "Alexander Sørloth", "Kristoffer Ajer", "Morten Thorsby",
-      "Zlatan Ibrahimović", "Dejan Kulusevski", "Alexander Isak", "Robin Olsen", "Emil Forsberg",
-      "Martin Braithwaite", "Gareth Bale", "Aaron Ramsey", "Joe Allen", "Wayne Hennessey",
-      "Robert Page", "Brennan Johnson", "Connor Roberts", "Neco Williams", "Kieffer Moore",
-      "Jamie Vardy", "Danny Ings", "Tammy Abraham", "Olivier Giroud", "Theo Hernández",
-      "Lucas Hernández", "Presnel Kimpembe", "Raphaël Varane", "Aurélien Tchouaméni", "Youssouf Fofana"
+      "Lionel Messi", "Cristiano Ronaldo", "Kylian Mbappé", "Erling Haaland", "Neymar Jr.",
+      "Luka Modric", "Toni Kroos", "Karim Benzema", "Robert Lewandowski", "Harry Kane",
+      "Mohamed Salah", "Sadio Mané", "Kevin De Bruyne", "Phil Foden", "Ilkay Gündogan",
+      "Virgil van Dijk", "Alisson Becker", "Ederson Moraes", "Thibaut Courtois", "Jan Oblak",
+      "Sergio Ramos", "Gerard Piqué", "Jude Bellingham", "Vinicius Jr.", "Rodrygo Goes",
+      "Antoine Griezmann", "Ousmane Dembélé", "Frenkie de Jong", "Pedri", "Gavi",
+      "Achraf Hakimi", "Sofyan Amrabat", "Yassine Bounou", "João Félix", "Diogo Jota",
+      "Bruno Fernandes", "Rúben Dias", "Bernardo Silva", "Rafael Leão", "Christian Eriksen",
+      "Romelu Lukaku", "Lautaro Martínez", "Paulo Dybala", "Ángel Di María", "Rodrigo De Paul",
+      "Nicolás Otamendi", "Emiliano Martínez", "Enzo Fernández", "Alexis Mac Allister", "Julián Álvarez",
+      "Giovani Lo Celso", "Leandro Paredes", "Nahuel Molina", "Lisandro Martínez", "Cristian Romero",
+      "Federico Valverde", "Darwin Núñez", "Luis Suárez", "Edinson Cavani", "Diego Godín",
+      "James Rodríguez", "Juan Cuadrado", "Duván Zapata", "Luis Díaz", "Wilmar Barrios",
+      "Alphonso Davies", "Jonathan David", "Christian Pulisic", "Weston McKennie", "Tyler Adams",
+      "Gio Reyna", "Sergiño Dest", "André Onana", "Victor Osimhen", "Wilfred Ndidi",
+      "Thomas Partey", "Mohammed Kudus", "André Ayew", "Takumi Minamino", "Kaoru Mitoma",
+      "Son Heung-min", "Hwang Hee-chan", "Mehdi Taremi", "Sardar Azmoun", "Hirving Lozano",
+      "Raúl Jiménez", "Andrés Guardado", "Guillermo Ochoa", "Keylor Navas", "Bryan Ruiz",
+      "Joel Campbell", "Clint Dempsey", "Tim Howard", "Diego Forlán", "Carlos Valderrama",
+      "Ronaldinho", "Pelé", "Diego Maradona", "Zinedine Zidane", "Francesco Totti",
+      "Alessandro Del Piero", "Andrea Pirlo", "Gianluigi Buffon", "Paolo Maldini", "Fabio Cannavaro",
+      "Cafu", "Roberto Carlos", "Rivaldo", "Ronaldo Nazário", "Zico",
+      "George Weah", "Samuel Eto'o", "Didier Drogba", "Emmanuel Adebayor", "Yaya Touré",
+      "Jay-Jay Okocha", "Roger Milla", "Patrick Vieira", "Thierry Henry", "David Beckham",
+      "Wayne Rooney", "Frank Lampard", "Steven Gerrard", "Paul Scholes", "Rio Ferdinand",
+      "John Terry", "Ashley Cole", "Petr Čech", "Nemanja Vidić", "Dimitar Berbatov",
+      "Robin van Persie", "Arjen Robben", "Wesley Sneijder", "Clarence Seedorf", "Edgar Davids",
+      "Ruud van Nistelrooy", "Marco van Basten", "Dennis Bergkamp", "Xavi", "Iniesta",
+      "David Villa", "Fernando Torres", "Iker Casillas", "Sergio Busquets", "Gerard Moreno",
+      "Álvaro Morata", "Koke", "Marco Asensio", "Jesús Navas", "Pau Torres",
+      "Ciro Immobile", "Lorenzo Insigne", "Federico Chiesa", "Leonardo Bonucci", "Giorgio Chiellini",
+      "Gianluigi Donnarumma", "Manuel Neuer", "Joshua Kimmich", "Leon Goretzka", "Kai Havertz",
+      "Timo Werner", "Thomas Müller", "Mats Hummels", "Antonio Rüdiger", "Marc-André ter Stegen",
+      "Mesut Özil", "Mario Götze", "Miroslav Klose", "Bastian Schweinsteiger", "Philipp Lahm",
+      "Andriy Shevchenko", "Henrikh Mkhitaryan", "Luka Jović", "Ivan Perišić", "Mario Mandžukić",
+      "Dejan Lovren", "Domagoj Vida", "Danijel Subašić", "Nikola Vlašić", "Josko Gvardiol"
     ];
 
-    const salaId = "sala_principal";
-    const jugadorId = "jugador_" + Math.random().toString(36).substr(2, 9);
+    let nombreUsuario = "";
     let esLider = false;
 
-    const salaRef = db.ref("salas/" + salaId);
+    function unirse() {
+      nombreUsuario = document.getElementById("nombre").value;
+      if (!nombreUsuario) return alert("Ingresá tu nombre");
 
-    salaRef.child("jugadores").once("value", snapshot => {
-      const jugadores = snapshot.val() || {};
-      if (Object.keys(jugadores).length === 0) esLider = true;
-      salaRef.child("jugadores/" + jugadorId).set({ nombre: jugadorId });
-    });
-
-    salaRef.child("jugadores").on("value", snapshot => {
-      const jugadores = snapshot.val() || {};
-      const lobbyHTML = `<h2>Jugadores en la sala:</h2><ul>${Object.values(jugadores).map(j => `<li>${j.nombre}</li>`).join("")}</ul>`;
-      document.getElementById("lobby").innerHTML = lobbyHTML;
-    });
-
-    const iniciarJuego = () => {
-      const futbolista = futbolistas[Math.floor(Math.random() * futbolistas.length)];
-      salaRef.child("jugadores").once("value", snapshot => {
-        const jugadores = Object.keys(snapshot.val());
-        const impostor = jugadores[Math.floor(Math.random() * jugadores.length)];
-        salaRef.update({ futbolista, impostor });
+      const ref = db.ref("jugadores");
+      ref.once("value", snap => {
+        const jugadores = snap.val() || {};
+        if (Object.keys(jugadores).length === 0) esLider = true;
+        db.ref("jugadores/" + nombreUsuario).set({ nombre: nombreUsuario });
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("lobby").classList.remove("hidden");
+        if (esLider) document.getElementById("liderControls").classList.remove("hidden");
       });
-    };
 
-    salaRef.on("value", snapshot => {
-      const data = snapshot.val();
-      if (!data || !data.futbolista) return;
-
-      let display = `<h2>Jugador seleccionado: ${(data.impostor === jugadorId) ? "???" : data.futbolista}</h2>`;
-      display += `<h3>Votá quién creés que es el impostor:</h3>`;
-
-      for (const [id, jugador] of Object.entries(data.jugadores || {})) {
-        if (id !== jugadorId) {
-          display += `<button onclick="votar('${id}')">${jugador.nombre}</button><br/>`;
-        }
-      }
-
-      salaRef.child("votos").once("value", votosSnap => {
-        const votos = votosSnap.val() || {};
-        const conteo = {};
-        Object.values(votos).forEach(v => conteo[v] = (conteo[v] || 0) + 1);
-
-        display += `<h4>Votos:</h4><ul>`;
-        for (const [id, jugador] of Object.entries(data.jugadores || {})) {
-          display += `<li>${jugador.nombre}: ${conteo[id] || 0} voto(s)</li>`;
-        }
-        display += `</ul>`;
-
-        document.getElementById("game").innerHTML = display;
+      db.ref("jugadores").on("value", snap => {
+        const jugadores = snap.val() || {};
+        document.getElementById("jugadores").innerHTML =
+          Object.keys(jugadores).map(j => `<div>${j}</div>`).join("");
       });
-    });
 
-    function votar(idVotado) {
-      salaRef.child("votos/" + jugadorId).set(idVotado);
+      db.ref("jugadores/" + nombreUsuario).onDisconnect().remove();
+
+      db.ref("jugadores/" + nombreUsuario + "/partida").on("value", snap => {
+        const jugador = snap.val();
+        if (!jugador) return;
+        document.getElementById("lobby").classList.add("hidden");
+        document.getElementById("juego").classList.remove("hidden");
+        if (jugador === "IMPOSTOR") {
+          document.getElementById("jugadorSeleccionado").innerText = "No sabés quién es el jugador. Sos el impostor 😈";
+        } else {
+          document.getElementById("jugadorSeleccionado").innerText = `El jugador es: ${jugador}`;
+        }
+        mostrarVotacion();
+      });
     }
 
-    function reiniciarSala() {
-      db.ref("salas/" + salaId).remove();
+    function iniciarJuego() {
+      db.ref("jugadores").once("value", snap => {
+        const jugadores = Object.keys(snap.val() || {});
+        const futbolista = futbolistas[Math.floor(Math.random() * futbolistas.length)];
+        const impostor = jugadores[Math.floor(Math.random() * jugadores.length)];
+        jugadores.forEach(j => {
+          db.ref("jugadores/" + j + "/partida").set(j === impostor ? "IMPOSTOR" : futbolista);
+        });
+        db.ref("partida/jugador").set(futbolista);
+      });
+    }
+
+    function reiniciarJuego() {
+      db.ref().set(null);
       location.reload();
     }
 
-    setTimeout(() => {
-      if (esLider) {
-        document.getElementById("controls").innerHTML = `
-          <button onclick="iniciarJuego()">Iniciar juego</button>
-          <button onclick="reiniciarSala()">Reiniciar partida</button>
-        `;
-      }
-    }, 2000);
+    function mostrarVotacion() {
+      db.ref("jugadores").once("value", snap => {
+        const jugadores = Object.keys(snap.val() || {});
+        document.getElementById("votacion").innerHTML = jugadores.map(j =>
+          `<button onclick="votar('${j}')">Votar a ${j}</button>`).join("<br>");
+      });
+    }
+
+    function votar(nombre) {
+      db.ref("votos/" + nombre).transaction(v => (v || 0) + 1);
+    }
+
+    db.ref("votos").on("value", snap => {
+      const votos = snap.val() || {};
+      const resultado = Object.entries(votos).map(([jugador, cant]) => `${jugador}: ${cant} votos`).join("<br>");
+      document.getElementById("mensaje").innerHTML = resultado;
+    });
   </script>
 </body>
 </html>
