@@ -95,10 +95,10 @@
     let esLider = false;
     let partidaActiva = false;
 
-    // Listeners globales para evitar múltiples listeners duplicados
     let listenerJugadores = null;
     let listenerRol = null;
     let listenerVotos = null;
+    let listenerResultado = null;
 
     function unirse() {
       nombreUsuario = document.getElementById("nombre").value.trim();
@@ -106,7 +106,6 @@
 
       const refJugadores = db.ref("jugadores");
 
-      // Añadir jugador y asignar líder si es el primero
       refJugadores.once("value", snap => {
         const jugadores = snap.val() || {};
         if (Object.keys(jugadores).length === 0) esLider = true;
@@ -116,11 +115,9 @@
         document.getElementById("lobby").classList.remove("hidden");
         if (esLider) document.getElementById("liderControls").classList.remove("hidden");
 
-        // Configurar listeners
         setupListeners();
       });
 
-      // Quitar jugador al cerrar pestaña
       db.ref("jugadores/" + nombreUsuario).onDisconnect().remove();
     }
 
@@ -138,7 +135,6 @@
       listenerRol.on("value", snap => {
         const rol = snap.val();
         if (!rol) {
-          // Volver al lobby si no tiene rol asignado
           document.getElementById("juego").classList.add("hidden");
           document.getElementById("lobby").classList.remove("hidden");
           if (esLider) document.getElementById("liderControls").classList.remove("hidden");
@@ -146,7 +142,6 @@
           eliminarBotones();
           return;
         }
-        // Mostrar pantalla de juego
         document.getElementById("lobby").classList.add("hidden");
         document.getElementById("juego").classList.remove("hidden");
         if (rol === "IMPOSTOR") {
@@ -172,6 +167,23 @@
         ).join("<br>");
         document.getElementById("mensaje").innerHTML = resultado;
       });
+
+      // Listener resultado final
+      if (listenerResultado) listenerResultado.off();
+      listenerResultado = db.ref("partida/resultado");
+      listenerResultado.on("value", snap => {
+        const resultado = snap.val();
+        if (resultado) {
+          // Mostrar resultado a todos
+          document.getElementById("mensaje").innerHTML = resultado;
+          document.getElementById("votacion").innerHTML = "";
+          mostrarBotonReiniciar();
+          partidaActiva = false;
+        } else {
+          document.getElementById("mensaje").innerHTML = "";
+          mostrarVotacion();
+        }
+      });
     }
 
     function iniciarJuego() {
@@ -184,8 +196,8 @@
         const futbolista = futbolistas[Math.floor(Math.random() * futbolistas.length)];
         const impostor = jugadores[Math.floor(Math.random() * jugadores.length)];
 
-        // Limpiar votos y asignar roles
         db.ref("votos").remove();
+        db.ref("partida/resultado").remove();
         eliminarBotones();
 
         jugadores.forEach(j => {
@@ -200,21 +212,17 @@
     }
 
     function reiniciarJuego() {
-      // Se elimina TODO menos jugadores, para conservar usuarios conectados
       db.ref("votos").remove();
-      db.ref("partida").remove();
-      // Se eliminan roles de los jugadores para volver al lobby
+      db.ref("partida").remove(); // Incluye partida/resultado
       db.ref("jugadores").once("value", snap => {
         const jugadores = snap.val() || {};
         Object.keys(jugadores).forEach(j => {
           db.ref("jugadores/" + j + "/partida").remove();
         });
       });
-
       partidaActiva = false;
       eliminarBotones();
 
-      // Volver a lobby y permitir votar después del reinicio
       document.getElementById("juego").classList.add("hidden");
       document.getElementById("lobby").classList.remove("hidden");
       if (esLider) document.getElementById("liderControls").classList.remove("hidden");
@@ -250,7 +258,7 @@
 
     function mostrarBotonFinalizar() {
       if (!esLider || !partidaActiva) return;
-      if (document.getElementById("finalizarBtn")) return; // Ya existe
+      if (document.getElementById("finalizarBtn")) return;
 
       const botonFinalizar = document.createElement("button");
       botonFinalizar.id = "finalizarBtn";
@@ -299,8 +307,7 @@
         }
 
         if (!expulsado) {
-          document.getElementById("mensaje").innerHTML = "No hubo votos. Nadie fue expulsado.";
-          mostrarBotonReiniciar();
+          db.ref("partida/resultado").set("No hubo votos. Nadie fue expulsado.");
           return;
         }
 
@@ -312,11 +319,7 @@
           } else {
             mensajeFinal = `Expulsaron a ${expulsado}, que no era el impostor. ¡Gana el impostor! 😈`;
           }
-
-          document.getElementById("mensaje").innerHTML = mensajeFinal;
-          document.getElementById("votacion").innerHTML = "";
-
-          mostrarBotonReiniciar();
+          db.ref("partida/resultado").set(mensajeFinal);
         });
       });
     }
