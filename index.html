@@ -60,7 +60,6 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Lista con jugadores mundialmente reconocidos
     const futbolistas = [
       "Lionel Messi", "Cristiano Ronaldo", "Neymar Jr.", "Kylian Mbappé", "Erling Haaland",
       "Robert Lewandowski", "Kevin De Bruyne", "Mohamed Salah", "Luka Modric", "Karim Benzema",
@@ -71,35 +70,30 @@
       "Paolo Maldini", "Roberto Carlos", "Cafu", "Johan Cruyff", "Diego Maradona",
       "Pelé", "George Best", "Bobby Charlton", "Gerd Müller", "Ferenc Puskás",
       "Eusébio", "Michel Platini", "Marco van Basten", "Jürgen Klinsmann", "Franz Beckenbauer",
-      "Drogba", "Kaka", "Luis Enrique", "Carlos Tevez", "Raúl González",
+      "Didier Drogba", "Kaká", "Luis Enrique", "Carlos Tevez", "Raúl González",
       "David Villa", "Fernando Torres", "Iker Casillas", "Marcelo", "Thiago Silva",
       "Ángel Di María", "Gareth Bale", "Paul Scholes", "Andriy Shevchenko", "Nemanja Vidić",
       "Diego Forlán", "Robin van Persie", "Arjen Robben", "James Rodríguez", "Juan Mata",
-      "Mesut Özil", "Karim Benzema", "Éric Cantona", "Claude Makélélé", "Philipp Lahm",
-      "Bastian Schweinsteiger", "Thomas Müller", "Mats Hummels", "Mario Götze", "Toni Kroos",
-      "Marc-André ter Stegen", "Alisson Becker", "Jan Oblak", "Ederson Moraes", "Thibaut Courtois",
-      "Kalidou Koulibaly", "Trent Alexander-Arnold", "Jordan Henderson", "N'Golo Kanté", "Raheem Sterling",
-      "Leroy Sané", "Jadon Sancho", "Phil Foden", "Mason Mount", "Bukayo Saka",
-      "Jude Bellingham", "Erling Haaland", "Vinícius Jr.", "Rodrygo", "Pedri",
-      "Frenkie de Jong", "Gavi", "João Félix", "Bernardo Silva", "Rúben Dias",
-      "Raphaël Varane", "Paul Pogba", "Edinson Cavani", "Álvaro Morata", "Kylian Mbappé",
-      "Marcelo", "Coutinho", "Sergio Agüero", "Diego Godín", "Roberto Firmino",
-      "Luis Alberto", "João Cancelo", "Alexis Sánchez", "Timo Werner", "Thomas Lemar",
-      "Timo Werner", "Hugo Lloris", "David Alaba", "Gareth Bale", "Christian Eriksen",
-      "Ivan Rakitić", "Neymar", "Manuel Neuer", "David Silva", "Dani Alves",
-      "Gianluigi Buffon", "Wesley Sneijder", "Claudio Marchisio", "Marco Reus", "Ivan Perišić",
-      "Gonzalo Higuaín", "James Milner", "Ashley Cole", "Cesc Fàbregas", "Eden Hazard",
-      "Luka Modrić", "Mario Mandžukić", "Dani Carvajal", "Ángel Correa", "Lucas Moura",
-      "Lucas Digne", "Miralem Pjanić", "Matthijs de Ligt", "Kalvin Phillips", "Rodri",
-      "Bruno Fernandes", "Christian Pulisic", "Gianluigi Donnarumma", "Eduardo Camavinga",
-      "Federico Valverde", "Achraf Hakimi", "Philippe Coutinho", "Mousa Dembélé", "Yaya Touré",
-      "Karim Benzema", "Thiago Alcântara", "Marquinhos", "Sergio Busquets", "Marc-André ter Stegen",
-      "Gerard Piqué", "Lucas Hernández", "Jordi Alba", "Raphaël Varane", "César Azpilicueta",
-      "Jordi Alba", "Sergio Busquets", "Juan Cuadrado", "Javier Mascherano", "Thiago Silva"
+      "Mesut Özil", "Éric Cantona", "Claude Makélélé", "Philipp Lahm", "Bastian Schweinsteiger",
+      "Thomas Müller", "Mats Hummels", "Mario Götze", "Toni Kroos", "Marc-André ter Stegen",
+      "Alisson Becker", "Jan Oblak", "Ederson Moraes", "Thibaut Courtois", "Kalidou Koulibaly",
+      "Trent Alexander-Arnold", "Jordan Henderson", "N'Golo Kanté", "Leroy Sané", "Jadon Sancho",
+      "Phil Foden", "Mason Mount", "Bukayo Saka", "Jude Bellingham", "Vinícius Jr.",
+      "Rodrygo", "Pedri", "Frenkie de Jong", "Gavi", "João Félix",
+      "Bernardo Silva", "Rúben Dias", "Raphaël Varane", "Edinson Cavani", "Álvaro Morata",
+      "Marcelo", "Philippe Coutinho", "Sergio Agüero", "Diego Godín", "Roberto Firmino",
+      "João Cancelo", "Alexis Sánchez", "Timo Werner", "Hugo Lloris", "David Alaba",
+      "Christian Eriksen", "Ivan Rakitić", "Gianluigi Buffon", "Wesley Sneijder", "Claudio Marchisio",
+      "Marco Reus", "Ivan Perišić", "Gonzalo Higuaín", "James Milner", "Ashley Cole",
+      "Cesc Fàbregas", "Eden Hazard", "Lucas Moura", "Matthijs de Ligt", "Kalvin Phillips",
+      "Rodri", "Bruno Fernandes", "Christian Pulisic", "Gianluigi Donnarumma", "Eduardo Camavinga",
+      "Federico Valverde", "Achraf Hakimi", "Thiago Alcântara", "Marquinhos", "Sergio Busquets",
+      "Gerard Piqué", "Lucas Hernández", "Jordi Alba", "César Azpilicueta", "Juan Cuadrado"
     ];
 
     let nombreUsuario = "";
     let esLider = false;
+    let partidaActiva = false;
 
     function unirse() {
       nombreUsuario = document.getElementById("nombre").value.trim();
@@ -122,10 +116,10 @@
           Object.keys(jugadores).map(j => `<div>${j}</div>`).join("");
       });
 
-      // Eliminar jugador cuando cierra pestaña
+      // Eliminar jugador al cerrar pestaña
       db.ref("jugadores/" + nombreUsuario).onDisconnect().remove();
 
-      // Escuchar partida asignada
+      // Escuchar rol asignado en partida
       db.ref("jugadores/" + nombreUsuario + "/partida").on("value", snap => {
         const jugador = snap.val();
         if (!jugador) return;
@@ -137,23 +131,33 @@
           document.getElementById("jugadorSeleccionado").innerText = `El jugador es: ${jugador}`;
         }
         mostrarVotacion();
+        if (esLider) mostrarBotonFinalizar();
       });
     }
 
     function iniciarJuego() {
       db.ref("jugadores").once("value", snap => {
         const jugadores = Object.keys(snap.val() || {});
+        if (jugadores.length < 3) {
+          alert("Se necesitan al menos 3 jugadores para iniciar.");
+          return;
+        }
         const futbolista = futbolistas[Math.floor(Math.random() * futbolistas.length)];
         const impostor = jugadores[Math.floor(Math.random() * jugadores.length)];
 
-        // Limpiar votos anteriores
+        // Limpiar votos anteriores y botones anteriores
         db.ref("votos").remove();
+        eliminarBotonFinalizar();
+        eliminarBotonReiniciar();
 
         jugadores.forEach(j => {
           db.ref("jugadores/" + j + "/partida").set(j === impostor ? "IMPOSTOR" : futbolista);
         });
 
         db.ref("partida/jugador").set(futbolista);
+        partidaActiva = true;
+        mostrarVotacion();
+        if (esLider) mostrarBotonFinalizar();
       });
     }
 
@@ -167,20 +171,19 @@
         const jugadores = Object.keys(snap.val() || {});
         db.ref("votos/" + nombreUsuario).once("value", votoSnap => {
           if (votoSnap.exists()) {
-            // Ya votó, mostrar mensaje
             document.getElementById("votacion").innerHTML = `<p>Ya votaste. Gracias.</p>`;
-          } else {
-            // Puede votar
+          } else if (partidaActiva) {
             document.getElementById("votacion").innerHTML = jugadores.map(j =>
               `<button onclick="votar('${j}')" style="margin:3px;">Votar a ${j}</button>`
             ).join("<br>");
+          } else {
+            document.getElementById("votacion").innerHTML = `<p>Esperando inicio de partida...</p>`;
           }
         });
       });
     }
 
     function votar(nombre) {
-      // Solo votar si no votó antes
       db.ref("votos/" + nombreUsuario).once("value", votoSnap => {
         if (votoSnap.exists()) {
           alert("Ya votaste");
@@ -191,9 +194,86 @@
       });
     }
 
+    function mostrarBotonFinalizar() {
+      if (!esLider || !partidaActiva) return;
+      if (document.getElementById("finalizarBtn")) return; // Ya está
+
+      const botonFinalizar = document.createElement("button");
+      botonFinalizar.id = "finalizarBtn";
+      botonFinalizar.innerText = "Finalizar partida";
+      botonFinalizar.style.marginTop = "15px";
+      botonFinalizar.onclick = finalizarPartida;
+      document.getElementById("juego").appendChild(botonFinalizar);
+    }
+
+    function eliminarBotonFinalizar() {
+      const btn = document.getElementById("finalizarBtn");
+      if (btn) btn.remove();
+    }
+
+    function eliminarBotonReiniciar() {
+      const btn = document.getElementById("reiniciarBtn");
+      if (btn) btn.remove();
+    }
+
+    function finalizarPartida() {
+      partidaActiva = false;
+      eliminarBotonFinalizar();
+
+      db.ref("votos").once("value", snap => {
+        const votos = snap.val() || {};
+        const cuenta = {};
+        Object.values(votos).forEach(voto => {
+          cuenta[voto] = (cuenta[voto] || 0) + 1;
+        });
+
+        // Encontrar jugador con más votos
+        let maxVotos = 0;
+        let expulsado = null;
+        for (const jugador in cuenta) {
+          if (cuenta[jugador] > maxVotos) {
+            maxVotos = cuenta[jugador];
+            expulsado = jugador;
+          }
+        }
+
+        if (!expulsado) {
+          document.getElementById("mensaje").innerHTML = "No hubo votos. Nadie fue expulsado.";
+          mostrarBotonReiniciar();
+          return;
+        }
+
+        db.ref("jugadores/" + expulsado + "/partida").once("value", snapJugador => {
+          const rol = snapJugador.val();
+          let mensajeFinal = "";
+          if (rol === "IMPOSTOR") {
+            mensajeFinal = `¡El impostor (${expulsado}) fue expulsado! ¡Ganaron los tripulantes! 🎉`;
+          } else {
+            mensajeFinal = `Expulsaron a ${expulsado}, que no era el impostor. ¡Gana el impostor! 😈`;
+          }
+
+          document.getElementById("mensaje").innerHTML = mensajeFinal;
+          document.getElementById("votacion").innerHTML = "";
+
+          mostrarBotonReiniciar();
+        });
+      });
+    }
+
+    function mostrarBotonReiniciar() {
+      if (document.getElementById("reiniciarBtn")) return;
+
+      const botonReiniciar = document.createElement("button");
+      botonReiniciar.id = "reiniciarBtn";
+      botonReiniciar.innerText = "Reiniciar partida";
+      botonReiniciar.style.marginTop = "15px";
+      botonReiniciar.onclick = reiniciarJuego;
+      document.getElementById("juego").appendChild(botonReiniciar);
+    }
+
+    // Mostrar votos en tiempo real
     db.ref("votos").on("value", snap => {
       const votos = snap.val() || {};
-      // Contar votos por jugador
       const cuenta = {};
       Object.values(votos).forEach(voto => {
         cuenta[voto] = (cuenta[voto] || 0) + 1;
